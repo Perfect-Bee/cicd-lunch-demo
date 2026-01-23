@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content})}">
+<th:block th:fragment="content">
+    <div class="content">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- 메뉴가 없을 때 -->
+                <div th:if="${isEmpty}" class="card text-center animate-fade-in">
+                    <div class="card-body py-5">
+                        <i class="bi bi-emoji-frown display-1 text-muted"></i>
+                        <h3 class="mt-4">등록된 메뉴가 없습니다</h3>
+                        <p class="text-muted">먼저 점심 메뉴를 등록해주세요.</p>
+                        <a th:href="@{/menus/new}" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-lg me-1"></i>메뉴 등록하기
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 룰렛 UI -->
+                <div th:unless="${isEmpty}" class="animate-fade-in">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold"><i class="bi bi-bullseye me-2 text-danger"></i>점심 룰렛</h2>
+                        <p class="text-muted">버튼을 클릭하면 룰렛이 돌아갑니다!</p>
+                    </div>
+
+                    <!-- 룰렛 컨테이너 -->
+                    <div class="card mb-4">
+                        <div class="card-body p-4">
+                            <!-- 룰렛 디스플레이 -->
+                            <div class="roulette-container position-relative mb-4">
+                                <div class="roulette-arrow">
+                                    <i class="bi bi-caret-down-fill"></i>
+                                </div>
+                                <div class="roulette-display" id="rouletteDisplay">
+                                    <div class="roulette-items" id="rouletteItems">
+                                        <div th:each="menu, stat : ${menus}" class="roulette-item" th:data-id="${menu.id}">
+                                            <span class="item-name" th:text="${menu.name}">메뉴명</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 컨트롤 버튼 -->
+                            <div class="d-flex justify-content-center gap-3">
+                                <button type="button" class="btn btn-lg btn-spin" id="spinBtn" onclick="spinRoulette()">
+                                    <i class="bi bi-play-circle me-2"></i>룰렛 돌리기
+                                </button>
+                                <button type="button" class="btn btn-lg btn-outline-secondary" onclick="resetHistory()">
+                                    <i class="bi bi-arrow-counterclockwise me-2"></i>기록 초기화
+                                </button>
+                            </div>
+
+                            <!-- 결과 표시 영역 -->
+                            <div id="resultArea" class="mt-4 d-none">
+                                <div class="result-card text-center p-4">
+                                    <div class="result-badge mb-3">
+                                        <span id="resultCategory" class="badge fs-6">카테고리</span>
+                                    </div>
+                                    <h2 class="result-name display-5 fw-bold mb-3" id="resultName">메뉴명</h2>
+                                    <p class="result-desc text-muted mb-3" id="resultDesc">설명</p>
+                                    <div class="d-flex justify-content-center gap-4">
+                                        <div>
+                                            <span class="text-muted small d-block">맵기</span>
+                                            <span class="spicy-display fs-5" id="resultSpicy"></span>
+                                        </div>
+                                        <div>
+                                            <span class="text-muted small d-block">추천도</span>
+                                            <span class="weight-stars fs-5" id="resultWeight"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 추천 정보 -->
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-info-circle me-2"></i>추천 알고리즘</h6>
+                            <ul class="mb-0 text-muted small">
+                                <li>가중치(별점)가 높은 메뉴일수록 당첨 확률이 높습니다.</li>
+                                <li>최근 5번 내에 추천된 메뉴는 제외됩니다.</li>
+                                <li>"기록 초기화"를 누르면 중복 방지 기록이 리셋됩니다.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .roulette-container {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 20px;
+            padding: 30px;
+            overflow: hidden;
+        }
+
+        .roulette-arrow {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: #f59e0b;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        .roulette-display {
+            background: linear-gradient(135deg, #2d2d44 0%, #1f1f35 100%);
+            border-radius: 16px;
+            height: 80px;
+            overflow: hidden;
+            position: relative;
+            border: 3px solid #667eea;
+            box-shadow: inset 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        .roulette-display::before,
+        .roulette-display::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 60px;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        .roulette-display::before {
+            left: 0;
+            background: linear-gradient(to right, #1f1f35, transparent);
+        }
+
+        .roulette-display::after {
+            right: 0;
+            background: linear-gradient(to left, #1f1f35, transparent);
+        }
+
+        .roulette-items {
+            display: flex;
+            transition: transform 0.1s linear;
+        }
+
+        .roulette-item {
+            flex: 0 0 200px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .roulette-item:nth-child(odd) {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .roulette-item:nth-child(even) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .btn-spin {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 50px;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-spin:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(245, 158, 11, 0.5);
+            color: white;
+        }
+
+        .btn-spin:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .btn-spin.spinning {
+            animation: pulse 0.5s infinite;
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border-radius: 16px;
+            border: 2px solid #e5e7eb;
+            animation: resultPop 0.5s ease-out;
+        }
+
+        @keyframes resultPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-name {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .spicy-display {
+            color: #ef4444;
+        }
+    </style>
+
+    <script th:inline="javascript">
+        const menus = /*[[${menus}]]*/ [];
+        let isSpinning = false;
+        let rouletteInterval;
+
+        // 룰렛 아이템 초기화
+        function initRoulette() {
+            const container = document.getElementById('rouletteItems');
+            container.innerHTML = '';
+
+            // 메뉴를 여러 번 반복하여 룰렛 효과 생성
+            for (let i = 0; i < 10; i++) {
+                menus.forEach(menu => {
+                    const item = document.createElement('div');
+                    item.className = 'roulette-item';
+                    item.dataset.id = menu.id;
+                    item.innerHTML = `<span class="item-name">${menu.name}</span>`;
+                    container.appendChild(item);
+                });
+            }
+        }
+
+        // 룰렛 회전
+        async function spinRoulette() {
+            if (isSpinning) return;
+            isSpinning = true;
+
+            const btn = document.getElementById('spinBtn');
+            const container = document.getElementById('rouletteItems');
+            const resultArea = document.getElementById('resultArea');
+
+            btn.disabled = true;
+            btn.classList.add('spinning');
+            btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>추천 중...';
+            resultArea.classList.add('d-none');
+
+            // API 호출하여 결과 가져오기
+            try {
+                const response = await fetch('/api/menus/recommend');
+                const data = await response.json();
+
+                if (!data.success) {
+                    showToast(data.message || '추천에 실패했습니다.', 'error');
+                    resetButton();
+                    return;
+                }
+
+                const selectedMenu = data.data;
+                const itemWidth = 200;
+
+                // 룰렛 애니메이션
+                let currentPos = 0;
+                let speed = 50;
+                let duration = 3000;
+                let startTime = Date.now();
+
+                // 선택된 메뉴의 위치 찾기
+                const items = container.querySelectorAll('.roulette-item');
+                let targetIndex = -1;
+                for (let i = items.length - 20; i < items.length - 5; i++) {
+                    if (parseInt(items[i].dataset.id) === selectedMenu.id) {
+                        targetIndex = i;
+                        break;
+                    }
+                }
+
+                const targetPos = targetIndex * itemWidth - (container.parentElement.offsetWidth / 2) + (itemWidth / 2);
+
+                // 애니메이션 함수
+                function animate() {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    // Easing function (easeOutCubic)
+                    const easeProgress = 1 - Math.pow(1 - progress, 3);
+                    currentPos = targetPos * easeProgress;
+
+                    container.style.transform = `translateX(-${currentPos}px)`;
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        // 애니메이션 완료
+                        showResult(selectedMenu);
+                        resetButton();
+                    }
+                }
+
+                animate();
+
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('추천 중 오류가 발생했습니다.', 'error');
+                resetButton();
+            }
+        }
+
+        // 결과 표시
+        function showResult(menu) {
+            const resultArea = document.getElementById('resultArea');
+            const categoryBadge = document.getElementById('resultCategory');
+            const nameEl = document.getElementById('resultName');
+            const descEl = document.getElementById('resultDesc');
+            const spicyEl = document.getElementById('resultSpicy');
+            const weightEl = document.getElementById('resultWeight');
+
+            // 카테고리 배지 색상
+            const categoryColors = {
+                'KOREAN': 'bg-danger',
+                'CHINESE': 'bg-warning text-dark',
+                'JAPANESE': 'bg-info',
+                'WESTERN': 'bg-primary',
+                'FASTFOOD': 'bg-success',
+                'ETC': 'bg-secondary'
+            };
+
+            categoryBadge.className = 'badge fs-6 ' + (categoryColors[menu.category] || 'bg-secondary');
+            categoryBadge.textContent = menu.categoryDisplayName;
+
+            nameEl.textContent = menu.name;
+            descEl.textContent = menu.description || '맛있는 음식입니다!';
+
+            // 맵기 표시
+            if (menu.spicyLevel === 0) {
+                spicyEl.innerHTML = '<span class="text-success">안매움</span>';
+            } else {
+                spicyEl.innerHTML = '<i class="bi bi-fire"></i>'.repeat(menu.spicyLevel);
+            }
+
+            // 가중치 별 표시
+            weightEl.innerHTML = '<i class="bi bi-star-fill"></i>'.repeat(menu.weight);
+
+            resultArea.classList.remove('d-none');
+        }
+
+        // 버튼 리셋
+        function resetButton() {
+            const btn = document.getElementById('spinBtn');
+            btn.disabled = false;
+            btn.classList.remove('spinning');
+            btn.innerHTML = '<i class="bi bi-play-circle me-2"></i>룰렛 돌리기';
+            isSpinning = false;
+        }
+
+        // 기록 초기화
+        async function resetHistory() {
+            try {
+                const response = await fetch('/api/menus/recommend/history', { method: 'DELETE' });
+                const data = await response.json();
+                showToast(data.message, 'success');
+
+                // 룰렛 리셋
+                const container = document.getElementById('rouletteItems');
+                container.style.transform = 'translateX(0)';
+                document.getElementById('resultArea').classList.add('d-none');
+                initRoulette();
+            } catch (error) {
+                showToast('초기화 중 오류가 발생했습니다.', 'error');
+            }
+        }
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', initRoulette);
+    </script>
+</th:block>
+</html>

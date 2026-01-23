@@ -1,10 +1,20 @@
 spring:
+  application:
+    name: lunch-recommendation
+
+  mvc:
+    hiddenmethod:
+      filter:
+        enabled: true
+
   thymeleaf:
     cache: false
+    prefix: classpath:/templates/
+    suffix: .html
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/lunchdraw?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/lunch?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
 
@@ -15,10 +25,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: false
+        dialect: org.hibernate.dialect.MySQLDialect
+    show-sql: true
 
   flyway:
     enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
 
 server:
   port: ${SERVER_PORT:8080}
@@ -26,3 +39,5 @@ server:
 logging:
   level:
     root: INFO
+    com.camp.cicdlunchdemo: DEBUG
+    org.hibernate.SQL: DEBUG

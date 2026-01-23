@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content)">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>점심 추천 서비스</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--primary-gradient) !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            transform: translateY(-2px);
+        }
+
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-recommend.active,
+        .btn-roulette.active {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+            transform: scale(1.05);
+        }
+
+        /* 카드 스타일 */
+        .card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            border-bottom: none;
+            font-weight: 600;
+        }
+
+        /* 버튼 스타일 */
+        .btn {
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+
+        .btn-recommend {
+            background: var(--primary-gradient);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            font-weight: 600;
+        }
+
+        .btn-recommend:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-roulette {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            font-weight: 600;
+        }
+
+        .btn-roulette:hover {
+            background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+        }
+
+        /* 배지 스타일 */
+        .badge {
+            font-weight: 500;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .category-badge {
+            font-size: 0.75rem;
+        }
+
+        /* 맵기 레벨 */
+        .spicy-level {
+            color: var(--danger-color);
+        }
+
+        .spicy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .spicy-badge.mild {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+        }
+
+        /* 가중치 별 */
+        .weight-stars {
+            color: #fbbf24;
+        }
+
+        /* 토스트 컨테이너 */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1100;
+        }
+
+        .toast {
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        /* 푸터 */
+        footer {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            margin-top: auto;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .animate-fade-in {
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* 폼 스타일 */
+        .form-control, .form-select {
+            border-radius: 10px;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        /* 범위 슬라이더 */
+        .form-range::-webkit-slider-thumb {
+            background: var(--primary-gradient);
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" th:href="@{/menus}">
+                <i class="bi bi-cup-hot-fill me-2"></i>점심 추천
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/menus}"
+                           th:classappend="${currentPage == 'list'} ? 'active' : ''">
+                            <i class="bi bi-grid-3x3-gap me-1"></i>메뉴 목록
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" th:href="@{/menus/new}"
+                           th:classappend="${currentPage == 'new'} ? 'active' : ''">
+                            <i class="bi bi-plus-circle me-1"></i>메뉴 등록
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-recommend" th:href="@{/menus/recommend}"
+                       th:classappend="${currentPage == 'recommend'} ? 'active' : ''">
+                        <i class="bi bi-dice-5-fill me-1"></i>빠른 추천
+                    </a>
+                    <a class="btn btn-roulette" th:href="@{/menus/roulette}"
+                       th:classappend="${currentPage == 'roulette'} ? 'active' : ''">
+                        <i class="bi bi-bullseye me-1"></i>룰렛
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 토스트 컨테이너 -->
+    <div class="toast-container">
+        <div id="liveToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body d-flex align-items-center">
+                    <i class="bi me-2" id="toastIcon"></i>
+                    <span id="toastMessage"></span>
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container flex-grow-1">
+        <div th:replace="${content}"></div>
+    </div>
+
+    <footer class="mt-5 py-4 text-white text-center">
+        <div class="container">
+            <p class="mb-1">&copy; 2026 내일배움캠프 Spring 커머스. All rights reserved.</p>
+            <small class="mb-1">Created for educational purposes by Robbie (최원빈)</small>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:inline="javascript">
+        // 토스트 표시 함수
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('liveToast');
+            const toastMessage = document.getElementById('toastMessage');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toast.classList.remove('success', 'error');
+            toast.classList.add(type);
+
+            toastMessage.textContent = message;
+
+            if (type === 'success') {
+                toastIcon.className = 'bi bi-check-circle-fill me-2';
+            } else {
+                toastIcon.className = 'bi bi-exclamation-circle-fill me-2';
+            }
+
+            const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+            bsToast.show();
+        }
+
+        // 서버에서 전달된 메시지 처리
+        document.addEventListener('DOMContentLoaded', function() {
+            const message = /*[[${message}]]*/ null;
+            const messageType = /*[[${messageType}]]*/ 'success';
+
+            if (message) {
+                showToast(message, messageType);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::content})}">
+<th:block th:fragment="content">
+    <div class="content animate-fade-in">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0 fw-bold"><i class="bi bi-plus-circle me-2"></i>새 메뉴 등록</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/menus}" th:object="${form}" method="post">
+                            <!-- 메뉴 이름 -->
+                            <div class="mb-4">
+                                <label for="name" class="form-label">
+                                    메뉴 이름 <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" class="form-control form-control-lg"
+                                       th:classappend="${#fields.hasErrors('name')} ? 'is-invalid' : ''"
+                                       id="name" th:field="*{name}" placeholder="예: 김치찌개" maxlength="50">
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></div>
+                            </div>
+
+                            <!-- 설명 -->
+                            <div class="mb-4">
+                                <label for="description" class="form-label">설명</label>
+                                <textarea class="form-control"
+                                          th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                                          id="description" th:field="*{description}" rows="3"
+                                          placeholder="메뉴에 대한 간단한 설명을 입력하세요" maxlength="255"></textarea>
+                                <div class="form-text">최대 255자까지 입력 가능합니다.</div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></div>
+                            </div>
+
+                            <!-- 카테고리 -->
+                            <div class="mb-4">
+                                <label for="category" class="form-label">
+                                    카테고리 <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select form-select-lg"
+                                        th:classappend="${#fields.hasErrors('category')} ? 'is-invalid' : ''"
+                                        id="category" th:field="*{category}">
+                                    <option value="">카테고리를 선택하세요</option>
+                                    <option th:each="cat : ${categories}" th:value="${cat.name()}" th:text="${cat.displayName}"></option>
+                                </select>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('category')}" th:errors="*{category}"></div>
+                            </div>
+
+                            <!-- 맵기 레벨 -->
+                            <div class="mb-4">
+                                <label for="spicyLevel" class="form-label">맵기 레벨</label>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <input type="range" class="form-range"
+                                               id="spicyLevel" th:field="*{spicyLevel}" min="0" max="3"
+                                               oninput="updateSpicyDisplay(this.value)">
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-muted small">안매움</span>
+                                            <span id="spicyDisplay" class="badge bg-success fs-6">안매움</span>
+                                            <span class="text-muted small">아주 매움</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('spicyLevel')}" th:errors="*{spicyLevel}"></div>
+                            </div>
+
+                            <!-- 가중치 -->
+                            <div class="mb-4">
+                                <label for="weight" class="form-label">추천 가중치</label>
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <input type="range" class="form-range"
+                                               id="weight" th:field="*{weight}" min="1" max="5"
+                                               oninput="updateWeightDisplay(this.value)">
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-muted small">낮음</span>
+                                            <span id="weightDisplay" class="weight-stars fs-5">
+                                                <i class="bi bi-star-fill"></i>
+                                            </span>
+                                            <span class="text-muted small">높음</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-text">가중치가 높을수록 룰렛에서 당첨될 확률이 높아집니다.</div>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('weight')}" th:errors="*{weight}"></div>
+                            </div>
+
+                            <!-- 버튼 -->
+                            <div class="d-flex gap-2 pt-3">
+                                <button type="submit" class="btn btn-primary btn-lg flex-grow-1">
+                                    <i class="bi bi-check-lg me-1"></i>등록하기
+                                </button>
+                                <a th:href="@{/menus}" class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-x-lg me-1"></i>취소
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const spicyLabels = ['안매움', '약간 매움', '매움', '아주 매움'];
+        const spicyColors = ['bg-success', 'bg-warning text-dark', 'bg-orange', 'bg-danger'];
+
+        function updateSpicyDisplay(value) {
+            const display = document.getElementById('spicyDisplay');
+            display.textContent = spicyLabels[value];
+            display.className = 'badge fs-6 ' + (value == 0 ? 'bg-success' : value == 1 ? 'bg-warning text-dark' : value == 2 ? 'bg-orange' : 'bg-danger');
+            if (value == 2) display.style.background = '#fd7e14';
+        }
+
+        function updateWeightDisplay(value) {
+            const display = document.getElementById('weightDisplay');
+            display.innerHTML = '<i class="bi bi-star-fill"></i>'.repeat(value);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSpicyDisplay(document.getElementById('spicyLevel').value);
+            updateWeightDisplay(document.getElementById('weight').value);
+        });
+    </script>
+</th:block>
+</html>
